@@ -1,0 +1,40 @@
+@ModuleInfo { minPklVersion = "0.27.0" }
+module frc.robot.pkl.SwerveConfig
+
+modules: Listing<SwerveModule>
+
+class SwerveModule {
+  location: Location
+  drive: TalonFXMotor
+  rotate: SparkMAXMotor
+  wheelCircumferenceMeters: Number
+}
+
+abstract class SwerveMotor {
+  id: Int32(isPositive && isNonZero)
+  gearRatio: Number(isPositive && isNonZero)
+}
+
+class TalonFXMotor extends SwerveMotor {
+  velocityControl: TalonFXVelocityControl
+}
+
+class SparkMAXMotor extends SwerveMotor {
+  positionControl: PIDConstants
+}
+
+class TalonFXVelocityControl extends PIDConstants {
+  kS: Number(isBetween(-512, 511))
+  kV: Number((num) -> num <= 3.4e38)
+}
+
+abstract class PIDConstants {
+  kP: Number
+  kI: Number
+  kD: Number
+}
+
+class Location {
+  x: Number
+  y: Number
+}
