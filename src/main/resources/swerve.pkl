@@ -29,27 +29,8 @@ modules {
       x = 0
       y = 0
     }
-    drive {
-      id = 1
-      gearRatio = 1
-      velocityControl {
-        kS = 0
-        kV = 0
-        kP = 0
-        kI = 0
-        kD = 0
-      }
-    }
-    rotate {
-      id = 5
-      positionControl {
-        kP = 0
-        kI = 0
-        kD = 0
-      }
-      gearRatio = 1
-    }
-    wheelCircumferenceMeters = 1
+    drive { id = 1 }
+    rotate { id = 5 }
   }
   new {
     location {
