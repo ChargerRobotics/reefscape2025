@@ -58,7 +58,7 @@ public class SwerveDrive {
                 }
             }
 
-            SwerveConfig.SparkMAXPositionControl rotatePositionControl = rotateConfig.positionControl;
+            SwerveConfig.PIDConstants rotatePositionControl = rotateConfig.positionControl;
             SparkBaseConfig rotatePositionConfig = new SparkMaxConfig();
             rotatePositionConfig.encoder.positionConversionFactor(360 / rotateConfig.gearRatio);
             rotatePositionConfig.closedLoop
