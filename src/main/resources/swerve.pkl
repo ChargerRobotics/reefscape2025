@@ -2,38 +2,56 @@ amends "SwerveConfig.pkl"
 
 import "pkl:math"
 
-local defaultModule = new SwerveModule {
-  drive {
-    velocityControl {
-      kS = 0
-      kV = 0
-      kP = 0
-      kI = 0
-      kD = 0
-    }
-    gearRatio = 6.75
-  }
-  rotate {
-    positionControl {
-      kP = 0
-      kI = 0
-      kD = 0
-    }
-    gearRatio = 21.428
-  }
-  wheelCircumferenceMeters = 0.1016 * math.pi
-}
-
 modules {
-  (defaultModule) {
+  default {
+    drive {
+      velocityControl {
+        kS = 0
+        kV = 0
+        kP = 0
+        kI = 0
+        kD = 0
+      }
+      gearRatio = 6.75
+    }
+    rotate {
+      positionControl {
+        kP = 0
+        kI = 0
+        kD = 0
+      }
+      gearRatio = 21.428
+    }
+    wheelCircumferenceMeters = 0.1016 * math.pi
+  }
+  new {
     location {
       x = 0
       y = 0
     }
-    drive { id = 1 }
-    rotate { id = 5 }
+    drive {
+      id = 1
+      gearRatio = 1
+      velocityControl {
+        kS = 0
+        kV = 0
+        kP = 0
+        kI = 0
+        kD = 0
+      }
+    }
+    rotate {
+      id = 5
+      positionControl {
+        kP = 0
+        kI = 0
+        kD = 0
+      }
+      gearRatio = 1
+    }
+    wheelCircumferenceMeters = 1
   }
-  (defaultModule) {
+  new {
     location {
       x = 0
       y = 0
@@ -41,7 +59,7 @@ modules {
     drive { id = 2 }
     rotate { id = 6 }
   }
-  (defaultModule) {
+  new {
     location {
       x = 0
       y = 0
@@ -49,7 +67,7 @@ modules {
     drive { id = 3 }
     rotate { id = 7 }
   }
-  (defaultModule) {
+  new {
     location {
       x = 0
       y = 0

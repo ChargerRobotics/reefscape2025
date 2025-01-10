@@ -28,7 +28,7 @@ class TalonFXVelocityControl extends PIDConstants {
   kV: Number((num) -> num <= 3.4e38)
 }
 
-abstract class PIDConstants {
+open class PIDConstants {
   kP: Number
   kI: Number
   kD: Number
