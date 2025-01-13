@@ -110,7 +110,7 @@ public class SwerveDrive {
 
             state.optimize(Rotation2d.fromDegrees(rotate.getEncoder().getPosition()));
 
-            double velocity = state.speedMetersPerSecond / module.wheelCircumference() / module.driveGearRatio();
+            double velocity = state.speedMetersPerSecond * module.driveGearRatio() / module.wheelCircumference();
             StatusCode driveStatus = drive.setControl(new VelocityDutyCycle(velocity).withSlot(0));
             if (!driveStatus.isOK()) {
                 String error = driveStatus.getName() + " (" + driveStatus.getDescription() + ")";
