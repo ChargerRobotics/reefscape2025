@@ -120,7 +120,11 @@ tasks.withType(JavaCompile) {
 pkl {
     javaCodeGenerators {
         genJava {
-            sourceModules = files("src/main/resources/SwerveConfig.pkl")
+            sourceModules = files(
+                    "src/main/resources/FRC.pkl",
+                    "src/main/resources/SwerveConfig.pkl",
+                    "src/main/resources/ElevatorConfig.pkl",
+            )
             generateJavadoc = true
         }
     }

@@ -1,9 +1,11 @@
 package frc.robot.swerve;
 
 import com.ctre.phoenix6.StatusCode;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.controls.VelocityDutyCycle;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.revrobotics.REVLibError;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkLowLevel;
@@ -15,6 +17,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import frc.robot.pkl.FRC;
 import frc.robot.pkl.SwerveConfig;
 
 import java.util.Arrays;
@@ -57,9 +60,14 @@ public class SwerveDrive {
                     System.err.println("Error when configuring swerve drive motor " + drive.getDeviceID() + ": " + error);
                 }
             }
+            if (driveConfig.inverted) {
+                // TODO: error messages on configure
+                drive.getConfigurator().apply(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
+            }
 
-            SwerveConfig.PIDConstants rotatePositionControl = rotateConfig.positionControl;
+            FRC.PIDConstants rotatePositionControl = rotateConfig.positionControl;
             SparkBaseConfig rotatePositionConfig = new SparkMaxConfig();
+            rotatePositionConfig.inverted(rotateConfig.inverted);
             rotatePositionConfig.encoder.positionConversionFactor(360 / rotateConfig.gearRatio);
             rotatePositionConfig.closedLoop
                     .p(rotatePositionControl.kP)
