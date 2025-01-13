@@ -1,0 +1,21 @@
+amends "ElevatorConfig.pkl"
+
+motors {
+  new { id = 10 }
+  new {
+    id = 11
+    inverted = true
+  }
+}
+
+constraints {
+  maxVelocity = 0
+  maxAcceleration = 0
+}
+
+feedforward {
+  kS = 0
+  kG = 0
+  kV = 0
+  kA = 0
+}

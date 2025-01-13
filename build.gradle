@@ -130,7 +130,7 @@ pkl {
     }
     evaluators {
         evalPkl {
-            sourceModules.add(file("src/main/resources/swerve.pkl"))
+            sourceModules.addAll(files("src/main/resources/swerve.pkl", "src/main/resources/elevator.pkl"))
         }
     }
 }
