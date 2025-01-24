@@ -16,7 +16,7 @@ modules {
     }
     rotate {
       positionControl {
-        kP = 0
+        kP = 0.03
         kI = 0
         kD = 0
       }
@@ -26,32 +26,32 @@ modules {
   }
   new {
     location {
-      x = 0
-      y = 0
+      x = -0.27305
+      y = -0.3048
     }
     drive { id = 1 }
     rotate { id = 5 }
   }
   new {
     location {
-      x = 0
-      y = 0
+      x = 0.27305
+      y = 0.282575
     }
     drive { id = 2 }
     rotate { id = 6 }
   }
   new {
     location {
-      x = 0
-      y = 0
+      x = 0.276225
+      y = -0.288925
     }
     drive { id = 3 }
     rotate { id = 7 }
   }
   new {
     location {
-      x = 0
-      y = 0
+      x = -0.2794
+      y = 0.276225
     }
     drive { id = 4 }
     rotate { id = 8 }

@@ -70,6 +70,8 @@ public class SwerveDrive {
             rotatePositionConfig.inverted(rotateConfig.inverted);
             rotatePositionConfig.encoder.positionConversionFactor(360 / rotateConfig.gearRatio);
             rotatePositionConfig.closedLoop
+                    .maxOutput(0.7)
+                    .minOutput(-0.7)
                     .p(rotatePositionControl.kP)
                     .i(rotatePositionControl.kI)
                     .d(rotatePositionControl.kD)
@@ -110,16 +112,17 @@ public class SwerveDrive {
 
             state.optimize(Rotation2d.fromDegrees(rotate.getEncoder().getPosition()));
 
-            double velocity = state.speedMetersPerSecond * module.driveGearRatio() / module.wheelCircumference();
-            StatusCode driveStatus = drive.setControl(new VelocityDutyCycle(velocity).withSlot(0));
-            if (!driveStatus.isOK()) {
-                String error = driveStatus.getName() + " (" + driveStatus.getDescription() + ")";
-                if (driveStatus.isWarning()) {
-                    System.err.println("Warning when setting swerve drive motor " + drive.getDeviceID() + ": " + error);
-                } else if (driveStatus.isError()) {
-                    System.err.println("Error when setting swerve drive motor " + drive.getDeviceID() + ": " + error);
-                }
-            }
+            drive.set(state.speedMetersPerSecond);
+            // double velocity = state.speedMetersPerSecond * module.driveGearRatio() / module.wheelCircumference();
+            // StatusCode driveStatus = drive.setControl(new VelocityDutyCycle(velocity).withSlot(0));
+            // if (!driveStatus.isOK()) {
+            //     String error = driveStatus.getName() + " (" + driveStatus.getDescription() + ")";
+            //     if (driveStatus.isWarning()) {
+            //         System.err.println("Warning when setting swerve drive motor " + drive.getDeviceID() + ": " + error);
+            //     } else if (driveStatus.isError()) {
+            //         System.err.println("Error when setting swerve drive motor " + drive.getDeviceID() + ": " + error);
+            //     }
+            // }
 
             REVLibError setRotateResult = rotate.getClosedLoopController().setReference(state.angle.getDegrees(), SparkBase.ControlType.kPosition);
             if (setRotateResult != REVLibError.kOk) {

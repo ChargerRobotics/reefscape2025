@@ -42,9 +42,10 @@ public class RobotContainer {
             ChassisSpeeds speeds = new ChassisSpeeds(
                     driveCurve.get(-controller.getLeftY()),
                     driveCurve.get(-controller.getLeftX()),
-                    -controller.getRightX() * Math.PI
+                    driveCurve.get(-controller.getRightX()) * Math.PI
             );
-            return ChassisSpeeds.fromFieldRelativeSpeeds(speeds, pigeon.getRotation2d());
+            // return ChassisSpeeds.fromFieldRelativeSpeeds(speeds, pigeon.getRotation2d());
+            return speeds;
         });
         this.elevatorSubsystem = new ElevatorSubsystem(elevatorConfig);
     }
