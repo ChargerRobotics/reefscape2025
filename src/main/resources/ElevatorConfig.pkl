@@ -5,7 +5,7 @@ import "FRC.pkl"
 
 motors: Listing<FRC.MotorController>
 
-constraints: Constraints
+constraints: FRC.Constraints
 
 feedforward: ElevatorFeedforwardConstants
 
@@ -14,9 +14,4 @@ class ElevatorFeedforwardConstants {
   kG: Number
   kV: Number
   kA: Number
-}
-
-class Constraints {
-  maxVelocity: Number(isPositive)
-  maxAcceleration: Number(isPositive)
 }

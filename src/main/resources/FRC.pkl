@@ -11,3 +11,8 @@ open class PIDConstants {
   kI: Number
   kD: Number
 }
+
+open class Constraints {
+  maxVelocity: Number(isPositive)
+  maxAcceleration: Number(isPositive)
+}

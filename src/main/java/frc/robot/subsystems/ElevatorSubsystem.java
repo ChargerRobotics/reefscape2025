@@ -38,7 +38,7 @@ public class ElevatorSubsystem extends SubsystemBase {
         ElevatorConfig.ElevatorFeedforwardConstants feedforwardConfig = config.feedforward;
         this.feedforward = new ElevatorFeedforward(feedforwardConfig.kS, feedforwardConfig.kG, feedforwardConfig.kV, feedforwardConfig.kA);
 
-        ElevatorConfig.Constraints constraintsConfig = config.constraints;
+        FRC.Constraints constraintsConfig = config.constraints;
         this.profile = new TrapezoidProfile(new TrapezoidProfile.Constraints(constraintsConfig.maxVelocity, constraintsConfig.maxAcceleration));
     }
     public ElevatorSubsystem(SparkMax controller, ElevatorFeedforward feedforward, TrapezoidProfile profile) {
