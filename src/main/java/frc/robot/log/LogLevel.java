@@ -1,5 +1,7 @@
 package frc.robot.log;
 
+import frc.robot.util.Elastic.Notification.NotificationLevel;
+
 public enum LogLevel implements Comparable<LogLevel> {
     ERROR("ERROR"),
     WARN("WARN"),
@@ -18,6 +20,15 @@ public enum LogLevel implements Comparable<LogLevel> {
         return switch (this) {
             case ERROR, WARN -> true;
             default -> false;
+        };
+    }
+
+    public NotificationLevel toNotificationLevel() {
+        return switch (this) {
+            case ERROR -> NotificationLevel.ERROR;
+            case WARN -> NotificationLevel.WARNING;
+            case INFO -> NotificationLevel.INFO;
+            case DEBUG, TRACE -> null;
         };
     }
 
