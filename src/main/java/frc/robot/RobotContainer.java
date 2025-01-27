@@ -19,6 +19,8 @@ import org.pkl.config.java.ConfigEvaluator;
 import org.pkl.core.ModuleSource;
 
 public class RobotContainer {
+    public static final Logger LOGGER = new Logger(LoggerOptions.builder("Robot").build());
+
     private final DriveTrainSubsystem driveTrainSubsystem;
     private final ElevatorSubsystem elevatorSubsystem;
 
