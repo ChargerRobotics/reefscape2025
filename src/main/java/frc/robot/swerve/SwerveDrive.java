@@ -3,7 +3,6 @@ package frc.robot.swerve;
 import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.controls.VelocityDutyCycle;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.revrobotics.REVLibError;
@@ -19,6 +18,9 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
+import frc.robot.RobotContainer;
+import frc.robot.log.LoggableREVLibError;
+import frc.robot.log.LoggableStatusCode;
 import frc.robot.pkl.FRC;
 import frc.robot.pkl.SwerveConfig;
 
@@ -56,36 +58,31 @@ public class SwerveDrive implements Sendable {
                     .withKI(driveVelocityControl.kI)
                     .withKD(driveVelocityControl.kD);
             StatusCode configureDriveStatus = drive.getConfigurator().apply(driveVelocityConfig);
-            if (!configureDriveStatus.isOK()) {
-                String error = configureDriveStatus.getName() + " (" + configureDriveStatus.getDescription() + ")";
-                if (configureDriveStatus.isWarning()) {
-                    System.err.println("Warning when configuring swerve drive motor " + drive.getDeviceID() + ": " + error);
-                } else if (configureDriveStatus.isError()) {
-                    System.err.println("Error when configuring swerve drive motor " + drive.getDeviceID() + ": " + error);
-                }
-            }
+            RobotContainer.LOGGER.log(new LoggableStatusCode("Error configuring Slot0 TalonFX " + drive.getDeviceID(), configureDriveStatus));
             if (driveConfig.inverted) {
-                // TODO: error messages on configure
-                drive.getConfigurator().apply(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
+                StatusCode statusCode = drive.getConfigurator().apply(new MotorOutputConfigs().withInverted(InvertedValue.Clockwise_Positive));
+                RobotContainer.LOGGER.log(new LoggableStatusCode("Error configuring Output TalonFX " + drive.getDeviceID(), statusCode));
             }
 
-            FRC.PIDConstants rotatePositionControl = rotateConfig.positionControl;
+            SwerveConfig.ProfiledPID rotatePositionControl = rotateConfig.positionControl;
+            FRC.PIDConstants rotatePositionPid = rotatePositionControl.constants;
+            FRC.Constraints rotatePositionConstraints = rotatePositionControl.constraints;
             SparkBaseConfig rotatePositionConfig = new SparkMaxConfig();
             rotatePositionConfig.inverted(rotateConfig.inverted);
             rotatePositionConfig.encoder.positionConversionFactor(360 / rotateConfig.gearRatio);
             rotatePositionConfig.closedLoop
-                    .maxOutput(0.7)
-                    .minOutput(-0.7)
-                    .p(rotatePositionControl.kP)
-                    .i(rotatePositionControl.kI)
-                    .d(rotatePositionControl.kD)
+                    .outputRange(-0.7, 0.7)
+                    .p(rotatePositionPid.kP)
+                    .i(rotatePositionPid.kI)
+                    .d(rotatePositionPid.kD)
                     .positionWrappingInputRange(-180, 180)
-                    .positionWrappingEnabled(true);
+                    .positionWrappingEnabled(true)
+                    .maxMotion
+                    .maxVelocity(rotatePositionConstraints.maxVelocity)
+                    .maxAcceleration(rotatePositionConstraints.maxAcceleration);
 
             REVLibError configureRotateResult = rotate.configure(rotatePositionConfig, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kNoPersistParameters);
-            if (configureRotateResult != REVLibError.kOk) {
-                System.err.println("Error when configuring swerve rotate motor " + rotate.getDeviceId() + ": " + configureRotateResult.name());
-            }
+            RobotContainer.LOGGER.log(new LoggableREVLibError("Error configuring SparkMAX " + rotate.getDeviceId(), configureRotateResult));
 
             Translation2d location = new Translation2d(module.location.x, module.location.y);
             locations[i] = location;
@@ -119,16 +116,9 @@ public class SwerveDrive implements Sendable {
             state.optimize(Rotation2d.fromDegrees(rotate.getEncoder().getPosition()));
 
             drive.set(state.speedMetersPerSecond);
-            // double velocity = state.speedMetersPerSecond * module.driveGearRatio() / module.wheelCircumference();
-            // StatusCode driveStatus = drive.setControl(new VelocityDutyCycle(velocity).withSlot(0));
-            // if (!driveStatus.isOK()) {
-            //     String error = driveStatus.getName() + " (" + driveStatus.getDescription() + ")";
-            //     if (driveStatus.isWarning()) {
-            //         System.err.println("Warning when setting swerve drive motor " + drive.getDeviceID() + ": " + error);
-            //     } else if (driveStatus.isError()) {
-            //         System.err.println("Error when setting swerve drive motor " + drive.getDeviceID() + ": " + error);
-            //     }
-            // }
+//             double velocity = state.speedMetersPerSecond * module.driveGearRatio() / module.wheelCircumference();
+//             StatusCode driveStatus = drive.setControl(new VelocityDutyCycle(velocity).withSlot(0));
+//             RobotContainer.LOGGER.log(new LoggableStatusCode("Error when setting TalonFX " + drive.getDeviceID(), driveStatus));
 
             REVLibError setRotateResult = rotate.getClosedLoopController().setReference(state.angle.getDegrees(), SparkBase.ControlType.kMAXMotionPositionControl);
             RobotContainer.LOGGER.log(new LoggableREVLibError("Error setting SparkMAX " + rotate.getDeviceId(), setRotateResult));

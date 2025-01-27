@@ -21,12 +21,17 @@ class TalonFXMotor extends SwerveMotor {
 }
 
 class SparkMAXMotor extends SwerveMotor {
-  positionControl: FRC.PIDConstants
+  positionControl: ProfiledPID
 }
 
 class TalonFXVelocityControl extends FRC.PIDConstants {
   kS: Number(isBetween(-512, 511))
   kV: Number((num) -> num <= 3.4e38)
+}
+
+class ProfiledPID {
+  constants: FRC.PIDConstants
+  constraints: FRC.Constraints
 }
 
 class Location {

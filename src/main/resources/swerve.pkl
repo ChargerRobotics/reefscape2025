@@ -16,9 +16,15 @@ modules {
     }
     rotate {
       positionControl {
-        kP = 0.03
-        kI = 0
-        kD = 0
+        constants {
+          kP = 0.03
+          kI = 0
+          kD = 0
+        }
+        constraints {
+          maxVelocity = 300
+          maxAcceleration = 200
+        }
       }
       gearRatio = 21.428
     }
