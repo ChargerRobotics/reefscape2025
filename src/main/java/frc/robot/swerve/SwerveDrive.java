@@ -105,6 +105,10 @@ public class SwerveDrive implements Sendable {
         this.states = kinematics.toSwerveModuleStates(speeds);
     }
 
+    public SwerveModule[] getModules() {
+        return modules;
+    }
+
     public void update() {
         for (int i = 0; i < modules.length; i++) {
             SwerveModule module = modules[i];
