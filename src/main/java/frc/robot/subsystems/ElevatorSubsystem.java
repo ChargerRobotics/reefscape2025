@@ -32,7 +32,7 @@ public class ElevatorSubsystem extends SubsystemBase {
             SparkBaseConfig motorConfig = new SparkMaxConfig()
                     .follow(this.controller, controllerConfig.inverted);
             new SparkMax(controllerConfig.id, SparkLowLevel.MotorType.kBrushless)
-                    .configure(motorConfig, SparkBase.ResetMode.kNoResetSafeParameters, SparkBase.PersistMode.kNoPersistParameters);
+                    .configure(motorConfig, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kNoPersistParameters);
         }
 
         ElevatorConfig.ElevatorFeedforwardConstants feedforwardConfig = config.feedforward;
