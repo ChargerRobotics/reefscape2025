@@ -31,6 +31,10 @@ public class RobotContainer {
             .withDeadZone(0.1)
             .withPowerMultiplier(0.8)
             .build();
+    private final ControlCurve rotateCurve = ControlCurves.power(3)
+            .withDeadZone(0.1)
+            .withPowerMultiplier(Math.PI)
+            .build();
 
     public RobotContainer() {
         SwerveConfig swerveConfig;
@@ -44,7 +48,7 @@ public class RobotContainer {
             ChassisSpeeds speeds = new ChassisSpeeds(
                     driveCurve.get(-controller.getLeftY()),
                     driveCurve.get(-controller.getLeftX()),
-                    driveCurve.get(-controller.getRightX()) * Math.PI
+                    rotateCurve.get(-controller.getRightX())
             );
             // return ChassisSpeeds.fromFieldRelativeSpeeds(speeds, pigeon.getRotation2d());
             return speeds;
