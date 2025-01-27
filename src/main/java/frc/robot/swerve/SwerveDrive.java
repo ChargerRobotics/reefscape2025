@@ -17,18 +17,22 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import frc.robot.pkl.FRC;
 import frc.robot.pkl.SwerveConfig;
 
 import java.util.Arrays;
+import java.util.function.Supplier;
 
-public class SwerveDrive {
+public class SwerveDrive implements Sendable {
     private final SwerveDriveKinematics kinematics;
     private final SwerveModule[] modules;
+    private final Supplier<Rotation2d> headingSupplier;
 
     private SwerveModuleState[] states;
 
-    public SwerveDrive(SwerveConfig config) {
+    public SwerveDrive(SwerveConfig config, Supplier<Rotation2d> headingSupplier) {
         int modulesSize = config.modules.size();
 
         this.modules = new SwerveModule[modulesSize];
@@ -91,10 +95,12 @@ public class SwerveDrive {
 
         this.kinematics = new SwerveDriveKinematics(locations);
         this.states = kinematics.toSwerveModuleStates(new ChassisSpeeds());
+        this.headingSupplier = headingSupplier;
     }
-    public SwerveDrive(SwerveModule... modules) {
+    public SwerveDrive(Supplier<Rotation2d> headingSupplier, SwerveModule... modules) {
         this.kinematics = new SwerveDriveKinematics(Arrays.stream(modules).map(SwerveModule::location).toArray(Translation2d[]::new));
         this.modules = modules;
+        this.headingSupplier = headingSupplier;
         this.states = kinematics.toSwerveModuleStates(new ChassisSpeeds());
     }
 
@@ -124,10 +130,27 @@ public class SwerveDrive {
             //     }
             // }
 
-            REVLibError setRotateResult = rotate.getClosedLoopController().setReference(state.angle.getDegrees(), SparkBase.ControlType.kPosition);
-            if (setRotateResult != REVLibError.kOk) {
-                System.err.println("Error when setting swerve rotate motor " + rotate.getDeviceId() + ": " + setRotateResult.name());
-            }
+            REVLibError setRotateResult = rotate.getClosedLoopController().setReference(state.angle.getDegrees(), SparkBase.ControlType.kMAXMotionPositionControl);
+            RobotContainer.LOGGER.log(new LoggableREVLibError("Error setting SparkMAX " + rotate.getDeviceId(), setRotateResult));
         }
+    }
+
+    @Override
+    public void initSendable(SendableBuilder builder) {
+        builder.setSmartDashboardType("SwerveDrive");
+
+        builder.addDoubleProperty("Front Left Angle", () -> states[1].angle.getRadians(), null);
+        builder.addDoubleProperty("Front Left Velocity", () -> states[1].speedMetersPerSecond, null);
+
+        builder.addDoubleProperty("Front Right Angle", () -> states[2].angle.getRadians(), null);
+        builder.addDoubleProperty("Front Right Velocity", () -> states[2].speedMetersPerSecond, null);
+
+        builder.addDoubleProperty("Back Left Angle", () -> states[3].angle.getRadians(), null);
+        builder.addDoubleProperty("Back Left Velocity", () -> states[3].speedMetersPerSecond, null);
+
+        builder.addDoubleProperty("Back Right Angle", () -> states[0].angle.getRadians(), null);
+        builder.addDoubleProperty("Back Right Velocity", () -> states[0].speedMetersPerSecond, null);
+
+        builder.addDoubleProperty("Robot Angle", () -> headingSupplier.get().getRadians(), null);
     }
 }

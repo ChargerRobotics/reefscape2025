@@ -38,7 +38,7 @@ public class RobotContainer {
             elevatorConfig = evaluator.evaluate(ModuleSource.modulePath("elevator.pkl")).as(ElevatorConfig.class);
         }
 
-        this.driveTrainSubsystem = new DriveTrainSubsystem(new SwerveDrive(swerveConfig), () -> {
+        this.driveTrainSubsystem = new DriveTrainSubsystem(new SwerveDrive(swerveConfig, pigeon::getRotation2d), () -> {
             ChassisSpeeds speeds = new ChassisSpeeds(
                     driveCurve.get(-controller.getLeftY()),
                     driveCurve.get(-controller.getLeftX()),
