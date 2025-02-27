@@ -6,17 +6,19 @@ modules {
   default {
     drive {
       velocityControl {
-        kS = 0
-        kV = 0
+        kS = 0.0125
+        kV = 0.0081
+        kA = 0.00033
         kP = 0
         kI = 0
         kD = 0
+        maxAcceleration = 18
       }
       gearRatio = 6.75
     }
     rotate {
       positionControl {
-        kP = 0.03
+        kP = 0.009
         kI = 0
         kD = 0
       }

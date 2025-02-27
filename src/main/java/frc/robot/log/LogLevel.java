@@ -1,8 +1,8 @@
 package frc.robot.log;
 
-public enum LogLevel implements Comparable<LogLevel> {
+public enum LogLevel {
     ERROR("ERROR"),
-    WARN("WARN"),
+    WARNING("WARNING"),
     INFO("INFO"),
     DEBUG("DEBUG"),
     TRACE("TRACE"),
@@ -16,7 +16,7 @@ public enum LogLevel implements Comparable<LogLevel> {
 
     public boolean isErr() {
         return switch (this) {
-            case ERROR, WARN -> true;
+            case ERROR, WARNING -> true;
             default -> false;
         };
     }
