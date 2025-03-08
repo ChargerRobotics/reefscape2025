@@ -10,6 +10,7 @@ import com.ctre.phoenix6.hardware.Pigeon2;
 import com.datasiqn.robotutils.controlcurve.ControlCurve;
 import com.datasiqn.robotutils.controlcurve.ControlCurves;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.LinearAcceleration;
@@ -26,7 +27,10 @@ import frc.robot.subsystems.ElevatorSubsystem;
 import frc.robot.subsystems.SlideSubsystem;
 import frc.robot.swerve.SwerveDrive;
 import frc.robot.swerve.SwerveModule;
+import frc.robot.util.AprilTagDetection;
 import frc.robot.util.Vector2d;
+
+import java.util.OptionalDouble;
 
 import org.pkl.config.java.ConfigEvaluator;
 import org.pkl.core.ModuleSource;
@@ -41,12 +45,12 @@ public class RobotContainer {
     private final CommandXboxController controller = new CommandXboxController(0);
     private final Pigeon2 pigeon = new Pigeon2(20);
 
+    private final AprilTagDetection aprilTag = new AprilTagDetection();
+
     private final ControlCurve driveCurve = ControlCurves.power(3)
             .withDeadZone(0.1)
             .withPowerMultiplier(6)
             .build();
-
-    private boolean slowMode = false;
 
     private double lastAcceleration = 0;
     private double velocity = 0;
@@ -60,7 +64,9 @@ public class RobotContainer {
         }
 
         this.driveTrainSubsystem = new DriveTrainSubsystem(new SwerveDrive(swerveConfig, pigeon::getRotation2d), () -> {
-            double speedFactor = slowMode ? 0.25 : 1;
+            if (SmartDashboard.getBoolean("Move Elevator Mode", false)) return new ChassisSpeeds();
+
+            double speedFactor = SmartDashboard.getBoolean("Slow Mode", false) ? 0.25 : 1;
 
             Vector2d controllerVector = new Vector2d(-controller.getLeftY(), -controller.getLeftX());
             double speed = driveCurve.get(Math.min(controllerVector.magnitude(), 1));
@@ -72,19 +78,86 @@ public class RobotContainer {
                     controllerVector.y(),
                     driveCurve.get(-controller.getRightX()) * speedFactor * Math.PI / 2
             );
-        }, pigeon::getRotation2d);
+        }, new PIDController(0.03, 0, 0), pigeon::getRotation2d);
         this.elevatorSubsystem = new ElevatorSubsystem(elevatorConfig);
         this.slideSubsystem = new SlideSubsystem(new PWMSparkMax(1));
-
-        controller.rightTrigger()
-            .whileTrue(slideSubsystem.outtakeCommand());
-
-        controller.leftBumper()
-            .onTrue(Commands.runOnce(() -> slowMode = !slowMode));
 
         Pigeon2Configuration pigeonConfig = new Pigeon2Configuration();
         pigeon.getConfigurator().apply(pigeonConfig);
 
+        setControllerBindings();
+        setDashboardValues();
+    }
+
+    /**
+     * Sets bindings for the Xbox Controller
+     * <p>
+     * Left joystick - drive
+     * <p>
+     * Right joystick - rotate (horizontal only)
+     * <p>
+     * a - elevator L1 position
+     * <p>
+     * b - elevator L2 position
+     * <p>
+     * x - elevator L3 position
+     * <p>
+     * y - elevator L4 position
+     * <p>
+     * LT - elevator intake position
+     * <p>
+     * LB - toggle slow mode
+     * <p>
+     * RT - outtake
+     * <p>
+     * RB - elevator 0 position
+     * <p>
+     * Left stick - toggle field centric
+     * <p>
+     * D-pad up - auto AprilTag align
+     */
+    public void setControllerBindings() {
+        controller.rightTrigger()
+            .whileTrue(slideSubsystem.outtakeCommand());
+
+        controller.rightBumper()
+            .whileTrue(elevatorSubsystem.setZero());
+
+        controller.leftTrigger()
+            .whileTrue(elevatorSubsystem.setHumanPlayer());
+
+        controller.leftBumper()
+            .onTrue(Commands.runOnce(() -> {
+                boolean slowMode = SmartDashboard.getBoolean("Slow Mode", false);
+                SmartDashboard.putBoolean("Slow Mode", !slowMode);
+            }));
+
+        controller.a()
+            .onTrue(elevatorSubsystem.setL1());
+
+        controller.b()
+            .onTrue(elevatorSubsystem.setL2());
+
+        controller.x()
+            .onTrue(elevatorSubsystem.setL3());
+
+        controller.y()
+            .onTrue(elevatorSubsystem.setL4());
+
+        controller.leftStick()
+            .onTrue(Commands.runOnce(() -> {
+                boolean fieldCentric = SmartDashboard.getBoolean("Field Centric", true);
+                SmartDashboard.putBoolean("Field Centric", !fieldCentric);
+            }));
+
+        controller.povUp()
+            .whileTrue(driveTrainSubsystem.followYCommand(() -> {
+                if (aprilTag.getCurrentId() == -1) return OptionalDouble.empty();
+                return OptionalDouble.of(aprilTag.getHorizontalOffset());
+            }));
+    }
+
+    public void setDashboardValues() {
         SmartDashboard.putData("Swerve", this.driveTrainSubsystem.getDrive());
         SmartDashboard.putData("Reset Gyro", Commands.runOnce(() -> pigeon.reset()));
         SmartDashboard.putData("Reset Wheel Encoders", Commands.runOnce(() -> {
@@ -92,10 +165,13 @@ public class RobotContainer {
                 module.rotate().getEncoder().setPosition(0);
             }
         }));
+        SmartDashboard.putData("Reset Elevator Encoder", Commands.runOnce(() -> elevatorSubsystem.getController().getEncoder().setPosition(0)));
         SmartDashboard.putData("reset velocity", Commands.runOnce(() -> {
             velocity = 0;
         }));
         SmartDashboard.putBoolean("Field Centric", true);
+        SmartDashboard.putBoolean("Slow Mode", false);
+        SmartDashboard.putData("Reverse Outtake", slideSubsystem.reverseOuttakeCommand());
     }
 
     public void periodic() {
@@ -108,8 +184,6 @@ public class RobotContainer {
         SmartDashboard.putNumber("velocity", velocity);
         SmartDashboard.putNumber("should be velocity", driveTrainSubsystem.getDrive().getCurrentSpeeds().vxMetersPerSecond);
 
-        SmartDashboard.putBoolean("Slow Mode", slowMode);
-
         driveTrainSubsystem.setFieldCentric(SmartDashboard.getBoolean("Field Centric", true));
-    }
+    }    
 }

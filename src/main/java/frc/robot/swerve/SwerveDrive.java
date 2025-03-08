@@ -22,6 +22,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.Robot;
 import frc.robot.RobotContainer;
 import frc.robot.log.LoggableStatusCode;
 import frc.robot.pkl.FRC;
@@ -105,8 +106,8 @@ public class SwerveDrive implements Sendable {
 
             this.modules[i] = new SwerveModule(drive, rotate, location, driveConfig.gearRatio, module.wheelCircumferenceMeters);
 
-            Elastic.sendNotification(new Notification(NotificationLevel.INFO, "Configured Swerve", ""));
         }
+        Elastic.sendNotification(new Notification(NotificationLevel.INFO, "Configured Swerve", ""));
 
         this.kinematics = new SwerveDriveKinematics(locations);
         this.states = kinematics.toSwerveModuleStates(new ChassisSpeeds());
@@ -142,22 +143,13 @@ public class SwerveDrive implements Sendable {
             TalonFX drive = module.drive();
             SparkMax rotate = module.rotate();
 
-            // if (state.speedMetersPerSecond == 0) state.angle = new Rotation2d();
             state.optimize(Rotation2d.fromDegrees(-rotate.getEncoder().getPosition()));
 
-            // drive.set(state.speedMetersPerSecond);
             double velocity = state.speedMetersPerSecond * module.driveGearRatio() / module.wheelCircumference();
             MotionMagicVelocityDutyCycle velocityControl = new MotionMagicVelocityDutyCycle(velocity);
             SmartDashboard.putNumber("target acceleration", velocityControl.Acceleration);
             StatusCode driveStatus = drive.setControl(velocityControl.withSlot(0));
-            if (!driveStatus.isOK()) {
-                String error = driveStatus.getName() + " (" + driveStatus.getDescription() + ")";
-                if (driveStatus.isWarning()) {
-                    System.err.println("Warning when setting swerve drive motor " + drive.getDeviceID() + ": " + error);
-                } else if (driveStatus.isError()) {
-                    System.err.println("Error when setting swerve drive motor " + drive.getDeviceID() + ": " + error);
-                }
-            }
+            RobotContainer.LOGGER.log(new LoggableStatusCode("setting swerve motor " + drive.getDeviceID(), driveStatus));
 
             REVLibError setRotateResult = rotate.getClosedLoopController().setReference(-state.angle.getDegrees(), SparkBase.ControlType.kPosition, ClosedLoopSlot.kSlot0, 0.19);
             if (setRotateResult != REVLibError.kOk) {

@@ -1,16 +1,20 @@
 package frc.robot.subsystems;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.swerve.SwerveDrive;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.OptionalDouble;
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 import org.json.simple.parser.ParseException;
@@ -21,11 +25,13 @@ import com.pathplanner.lib.controllers.PPLTVController;
 
 public class DriveTrainSubsystem extends SubsystemBase {
     private final SwerveDrive drive;
+    private final PIDController followPid;
 
     private boolean fieldCentric = true;
 
-    public DriveTrainSubsystem(SwerveDrive drive, Supplier<ChassisSpeeds> speedsSupplier, Supplier<Rotation2d> headingSupplier) {
+    public DriveTrainSubsystem(SwerveDrive drive, Supplier<ChassisSpeeds> speedsSupplier, PIDController followPid, Supplier<Rotation2d> headingSupplier) {
         this.drive = drive;
+        this.followPid = followPid;
 
         setDefaultCommand(run(() -> {
             ChassisSpeeds speeds = speedsSupplier.get();
@@ -68,6 +74,14 @@ public class DriveTrainSubsystem extends SubsystemBase {
 
     public void setFieldCentric(boolean fieldCentric) {
         this.fieldCentric = fieldCentric;
+    }
+
+    public Command followYCommand(Supplier<OptionalDouble> displacementSupplier) {
+        return run(() -> {
+            OptionalDouble displacement = displacementSupplier.get();
+            if (displacement.isEmpty()) return;
+            drive.setSpeeds(new ChassisSpeeds(0, followPid.calculate(displacement.getAsDouble()), 0));
+        });
     }
 
     @Override

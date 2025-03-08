@@ -9,6 +9,8 @@ constraints: Constraints
 
 feedforward: ElevatorFeedforwardConstants
 
+setpoints: ElevatorSetpoints
+
 class ElevatorFeedforwardConstants {
   kS: Number
   kG: Number
@@ -19,4 +21,12 @@ class ElevatorFeedforwardConstants {
 class Constraints {
   maxVelocity: Number(isPositive)
   maxAcceleration: Number(isPositive)
+}
+
+class ElevatorSetpoints {
+  humanPlayer: Number
+  L1: Number
+  L2: Number
+  L3: Number
+  L4: Number
 }

@@ -9,8 +9,8 @@ motors {
 }
 
 constraints {
-  maxVelocity = 0
-  maxAcceleration = 0
+  maxVelocity = 100
+  maxAcceleration = 60
 }
 
 feedforward {
@@ -18,4 +18,12 @@ feedforward {
   kG = 0
   kV = 0
   kA = 0
+}
+
+setpoints {
+  humanPlayer = 15
+  L1 = 10
+  L2 = 20
+  L3 = 30
+  L4 = 40
 }

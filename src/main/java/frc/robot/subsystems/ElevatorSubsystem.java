@@ -8,7 +8,10 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.ElevatorPositions;
 import frc.robot.pkl.ElevatorConfig;
 import frc.robot.pkl.FRC;
 
@@ -19,6 +22,8 @@ public class ElevatorSubsystem extends SubsystemBase {
     private final ElevatorFeedforward feedforward;
 
     private final TrapezoidProfile profile;
+
+    private final ElevatorPositions elevatorPositions;
 
     private TrapezoidProfile.State goal = new TrapezoidProfile.State();
     private TrapezoidProfile.State setpoint = new TrapezoidProfile.State();
@@ -40,18 +45,55 @@ public class ElevatorSubsystem extends SubsystemBase {
 
         ElevatorConfig.Constraints constraintsConfig = config.constraints;
         this.profile = new TrapezoidProfile(new TrapezoidProfile.Constraints(constraintsConfig.maxVelocity, constraintsConfig.maxAcceleration));
+
+        ElevatorConfig.ElevatorSetpoints setpoints = config.setpoints;
+        this.elevatorPositions = new ElevatorPositions(setpoints.humanPlayer, setpoints.L1, setpoints.L2, setpoints.L3, setpoints.L4);
+
+        SmartDashboard.putNumber("elevator/kS", this.feedforward.getKs());
+        SmartDashboard.putNumber("elevator/kG", this.feedforward.getKg());
+        SmartDashboard.putNumber("elevator/kV", this.feedforward.getKv());
+        SmartDashboard.putNumber("elevator/kA", this.feedforward.getKa());
     }
-    public ElevatorSubsystem(SparkMax controller, ElevatorFeedforward feedforward, TrapezoidProfile profile) {
+    public ElevatorSubsystem(SparkMax controller, ElevatorFeedforward feedforward, TrapezoidProfile profile, ElevatorPositions elevatorPositions) {
        this.controller = controller;
        this.feedforward = feedforward;
        this.profile = profile;
+       this.elevatorPositions = elevatorPositions;
+    }
+
+    public SparkMax getController() {
+        return controller;
+    }
+
+    public Command setZero() {
+        return runOnce(() -> setGoal(0));
+    }
+
+    public Command setHumanPlayer() {
+        return runOnce(() -> setGoal(elevatorPositions.humanPlayer()));
+    }
+
+    public Command setL1() {
+        return runOnce(() -> setGoal(elevatorPositions.L1()));
+    }
+
+    public Command setL2() {
+        return runOnce(() -> setGoal(elevatorPositions.L2()));
+    }
+
+    public Command setL3() {
+        return runOnce(() -> setGoal(elevatorPositions.L3()));
+    }
+
+    public Command setL4() {
+        return runOnce(() -> setGoal(elevatorPositions.L4()));
     }
 
     public void setGoal(TrapezoidProfile.State goal) {
         this.goal = goal;
     }
     public void setGoal(double goal) {
-        this.goal.position = goal;
+        this.setGoal(new TrapezoidProfile.State(goal, 0));
     }
 
     @Override
@@ -60,5 +102,13 @@ public class ElevatorSubsystem extends SubsystemBase {
 
         controller.setVoltage(feedforward.calculateWithVelocities(setpoint.velocity, nextState.velocity));
         setpoint = nextState;
+
+        SmartDashboard.putNumber("elevator/position", controller.getEncoder().getPosition());
+        SmartDashboard.putNumber("elevator/setpoint", setpoint.position);
+
+        feedforward.setKs(SmartDashboard.getNumber("elevator/kS", 0));
+        feedforward.setKg(SmartDashboard.getNumber("elevator/kG", 0));
+        feedforward.setKv(SmartDashboard.getNumber("elevator/kV", 0));
+        feedforward.setKa(SmartDashboard.getNumber("elevator/kA", 0));
     }
 }
