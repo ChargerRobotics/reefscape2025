@@ -9,6 +9,8 @@ constraints: Constraints
 
 feedforward: ElevatorFeedforwardConstants
 
+pid: FRC.PIDConstants
+
 setpoints: ElevatorSetpoints
 
 class ElevatorFeedforwardConstants {
@@ -24,7 +26,6 @@ class Constraints {
 }
 
 class ElevatorSetpoints {
-  humanPlayer: Number
   L1: Number
   L2: Number
   L3: Number

@@ -22,7 +22,6 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.robot.Robot;
 import frc.robot.RobotContainer;
 import frc.robot.log.LoggableStatusCode;
 import frc.robot.pkl.FRC;
@@ -105,7 +104,6 @@ public class SwerveDrive implements Sendable {
             locations[i] = location;
 
             this.modules[i] = new SwerveModule(drive, rotate, location, driveConfig.gearRatio, module.wheelCircumferenceMeters);
-
         }
         Elastic.sendNotification(new Notification(NotificationLevel.INFO, "Configured Swerve", ""));
 

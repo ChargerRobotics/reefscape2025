@@ -1,7 +1,10 @@
 amends "ElevatorConfig.pkl"
 
 motors {
-  new { id = 10 }
+  new {
+    id = 10
+    inverted = true
+  }
   new {
     id = 11
     inverted = true
@@ -9,21 +12,26 @@ motors {
 }
 
 constraints {
-  maxVelocity = 100
-  maxAcceleration = 60
+  maxVelocity = 90
+  maxAcceleration = 70
 }
 
 feedforward {
-  kS = 0
-  kG = 0
-  kV = 0
-  kA = 0
+  kS = 0.341
+  kG = 0.165
+  kV = 0.115
+  kA = 0.002
+}
+
+pid {
+  kP = 0.9
+  kI = 0
+  kD = 0
 }
 
 setpoints {
-  humanPlayer = 15
   L1 = 10
-  L2 = 20
-  L3 = 30
-  L4 = 40
+  L2 = 17
+  L3 = 40
+  L4 = 80
 }

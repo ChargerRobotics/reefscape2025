@@ -11,11 +11,11 @@ public class SlideSubsystem extends SubsystemBase {
         this.motorController = motorController;
     }
 
-    public Command reverseOuttakeCommand() {
-        return startEnd(() -> motorController.set(0.8), motorController::stopMotor);
+    public Command reverseOuttakeCommand(double speed) {
+        return startEnd(() -> motorController.set(speed), motorController::stopMotor);
     }
 
-    public Command outtakeCommand() {
-        return startEnd(() -> motorController.set(-0.8), motorController::stopMotor);
+    public Command outtakeCommand(double speed) {
+        return startEnd(() -> motorController.set(-speed), motorController::stopMotor);
     }
 }

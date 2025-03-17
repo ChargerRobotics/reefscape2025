@@ -11,11 +11,14 @@ import com.datasiqn.robotutils.controlcurve.ControlCurve;
 import com.datasiqn.robotutils.controlcurve.ControlCurves;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.log.Logger;
@@ -47,9 +50,11 @@ public class RobotContainer {
 
     private final AprilTagDetection aprilTag = new AprilTagDetection();
 
+    private final SendableChooser<AutoType> autoChooser = new SendableChooser<>();
+
     private final ControlCurve driveCurve = ControlCurves.power(3)
             .withDeadZone(0.1)
-            .withPowerMultiplier(6)
+            .withPowerMultiplier(5)
             .build();
 
     private double lastAcceleration = 0;
@@ -64,8 +69,6 @@ public class RobotContainer {
         }
 
         this.driveTrainSubsystem = new DriveTrainSubsystem(new SwerveDrive(swerveConfig, pigeon::getRotation2d), () -> {
-            if (SmartDashboard.getBoolean("Move Elevator Mode", false)) return new ChassisSpeeds();
-
             double speedFactor = SmartDashboard.getBoolean("Slow Mode", false) ? 0.25 : 1;
 
             Vector2d controllerVector = new Vector2d(-controller.getLeftY(), -controller.getLeftX());
@@ -80,7 +83,8 @@ public class RobotContainer {
             );
         }, new PIDController(0.03, 0, 0), pigeon::getRotation2d);
         this.elevatorSubsystem = new ElevatorSubsystem(elevatorConfig);
-        this.slideSubsystem = new SlideSubsystem(new PWMSparkMax(1));
+        this.elevatorSubsystem.getController().getEncoder().setPosition(0);
+        this.slideSubsystem = new SlideSubsystem(new PWMSparkMax(9));
 
         Pigeon2Configuration pigeonConfig = new Pigeon2Configuration();
         pigeon.getConfigurator().apply(pigeonConfig);
@@ -96,7 +100,7 @@ public class RobotContainer {
      * <p>
      * Right joystick - rotate (horizontal only)
      * <p>
-     * a - elevator L1 position
+     * a - elevator 0 position
      * <p>
      * b - elevator L2 position
      * <p>
@@ -104,27 +108,30 @@ public class RobotContainer {
      * <p>
      * y - elevator L4 position
      * <p>
-     * LT - elevator intake position
+     * LT - toggle field centric
      * <p>
      * LB - toggle slow mode
      * <p>
      * RT - outtake
      * <p>
-     * RB - elevator 0 position
+     * RB - auto outtake
      * <p>
      * Left stick - toggle field centric
      * <p>
-     * D-pad up - auto AprilTag align
+     * D-pad left - auto AprilTag align
      */
-    public void setControllerBindings() {
+    private void setControllerBindings() {
         controller.rightTrigger()
-            .whileTrue(slideSubsystem.outtakeCommand());
+            .whileTrue(slideSubsystem.outtakeCommand(0.8));
 
         controller.rightBumper()
-            .whileTrue(elevatorSubsystem.setZero());
+            .onTrue(slideSubsystem.outtakeCommand(0.75).withTimeout(0.09));
 
         controller.leftTrigger()
-            .whileTrue(elevatorSubsystem.setHumanPlayer());
+            .onTrue(Commands.runOnce(() -> {
+                boolean fieldCentric = SmartDashboard.getBoolean("Field Centric", true);
+                SmartDashboard.putBoolean("Field Centric", !fieldCentric);
+            }));
 
         controller.leftBumper()
             .onTrue(Commands.runOnce(() -> {
@@ -151,27 +158,56 @@ public class RobotContainer {
             }));
 
         controller.povUp()
+            .whileTrue(Commands.run(() -> elevatorSubsystem.setGoal(elevatorSubsystem.getGoal().position + 0.2), elevatorSubsystem));
+
+        controller.povDown()
+            .whileTrue(Commands.run(() -> elevatorSubsystem.setGoal(elevatorSubsystem.getGoal().position - 0.2), elevatorSubsystem));
+
+        controller.povLeft()
             .whileTrue(driveTrainSubsystem.followYCommand(() -> {
                 if (aprilTag.getCurrentId() == -1) return OptionalDouble.empty();
                 return OptionalDouble.of(aprilTag.getHorizontalOffset());
             }));
     }
 
-    public void setDashboardValues() {
+    private void setDashboardValues() {
+        for (AutoType autoType : AutoType.values()) {
+            autoChooser.addOption(autoType.toString(), autoType);
+        }
+
         SmartDashboard.putData("Swerve", this.driveTrainSubsystem.getDrive());
+        SmartDashboard.putData("Auto", this.autoChooser);
         SmartDashboard.putData("Reset Gyro", Commands.runOnce(() -> pigeon.reset()));
         SmartDashboard.putData("Reset Wheel Encoders", Commands.runOnce(() -> {
             for (SwerveModule module : driveTrainSubsystem.getDrive().getModules()) {
                 module.rotate().getEncoder().setPosition(0);
             }
         }));
-        SmartDashboard.putData("Reset Elevator Encoder", Commands.runOnce(() -> elevatorSubsystem.getController().getEncoder().setPosition(0)));
+        SmartDashboard.putData("Reset Elevator", Commands.runOnce(() -> {
+            elevatorSubsystem.getController().getEncoder().setPosition(0);
+            elevatorSubsystem.setSetpoint(0);
+            elevatorSubsystem.setGoal(0);
+        }));
         SmartDashboard.putData("reset velocity", Commands.runOnce(() -> {
             velocity = 0;
         }));
         SmartDashboard.putBoolean("Field Centric", true);
         SmartDashboard.putBoolean("Slow Mode", false);
-        SmartDashboard.putData("Reverse Outtake", slideSubsystem.reverseOuttakeCommand());
+        SmartDashboard.putData("Reverse Outtake", slideSubsystem.reverseOuttakeCommand(0.2));
+    }
+
+    public Command getAutoCommand() {
+        AutoType autoType = autoChooser.getSelected();
+        if (autoType == null) autoType = AutoType.NONE;
+        return autoType.getAutoCommand(this);
+    }
+
+    public Rotation2d getHeading() {
+        return pigeon.getRotation2d();
+    }
+
+    public DriveTrainSubsystem getDriveTrainSubsystem() {
+        return driveTrainSubsystem;
     }
 
     public void periodic() {
